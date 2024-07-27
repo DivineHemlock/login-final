@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/security")
-@CrossOrigin("*")
+//@CrossOrigin("*")
 public class ObjectController {
     private final ObjectService service;
 

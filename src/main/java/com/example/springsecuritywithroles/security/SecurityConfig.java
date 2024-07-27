@@ -35,8 +35,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.httpBasic();
-        http.formLogin().loginPage("/login");
-        http.authorizeRequests().antMatchers("/login" , "/api/v1/manager/token/refresh" , "/api/v1/supervisor/token/refresh").permitAll();
+//        http.formLogin().loginPage("/login");
+        http.formLogin().loginProcessingUrl("/login");
+        http.authorizeRequests().antMatchers("/login").permitAll();
         http.authorizeRequests().anyRequest().authenticated();
         http.addFilter(new CustomAuthenticationFilter(authenticationManagerBean()));
         http.addFilterBefore(new CustomAuthorizationFilter() , UsernamePasswordAuthenticationFilter.class);
