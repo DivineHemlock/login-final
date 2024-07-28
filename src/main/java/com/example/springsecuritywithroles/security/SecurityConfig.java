@@ -34,16 +34,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.httpBasic();
-//        http.formLogin().loginPage("/login");
-        http.formLogin().loginProcessingUrl("/login");
+        http.csrf().disable();
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.authorizeRequests().antMatchers("/login").permitAll();
+//        http.httpBasic();
         http.authorizeRequests().anyRequest().authenticated();
+        http.formLogin().loginProcessingUrl("/login");
         http.addFilter(new CustomAuthenticationFilter(authenticationManagerBean()));
         http.addFilterBefore(new CustomAuthorizationFilter() , UsernamePasswordAuthenticationFilter.class);
 //        http.authorizeRequests().anyRequest().permitAll();
-        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-        http.csrf().disable();
         http.logout().permitAll();
         // cors config :
         // if allowed credentials is true : we should give exact origin address in allowed origins

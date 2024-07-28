@@ -16,6 +16,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Date;
 import java.util.stream.Collectors;
 
@@ -29,29 +30,32 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
-        log.info("user name is {} , password is {}" , username , password);
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username , password);
+        String encodedUserPassword = request.getHeader("authorization").replace("Basic ", "");
+        String decodedUserPass = new String(Base64.getDecoder().decode(encodedUserPassword));
+        int indexOfColon = decodedUserPass.indexOf(':');
+        String username = decodedUserPass.substring(0, indexOfColon);
+        String password = decodedUserPass.substring(indexOfColon + 1);
+        log.info("user name is {} , password is {}", username, password);
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
         return authenticationManager.authenticate(authenticationToken);
     }
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
-        User user = (User) authentication.getPrincipal();
+        SecurityUser user = (SecurityUser) authentication.getPrincipal();
         Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
         String accessToken = JWT.create()
                 .withSubject(user.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() +  60 * 60 * 1000 ))
+                .withExpiresAt(new Date(System.currentTimeMillis() + 60 * 60 * 1000))
                 .withIssuer(request.getRequestURI().toString())
-                .withClaim("roles" , user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
+                .withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
                 .sign(algorithm);
         String refreshToken = JWT.create()
                 .withSubject(user.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 8 * 60 * 60 * 1000 ))
+                .withExpiresAt(new Date(System.currentTimeMillis() + 8 * 60 * 60 * 1000))
                 .withIssuer(request.getRequestURI().toString())
                 .sign(algorithm);
-        response.setHeader("accessToken" , accessToken);
-        response.setHeader("refreshToken" , refreshToken);
+        response.setHeader("accessToken", accessToken);
+        response.setHeader("refreshToken", refreshToken);
     }
 }
